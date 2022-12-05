@@ -5,6 +5,7 @@
 - Pytorch >= 0.4.1
 - opencv-python
 - korina
+- matplotlib
 
 ## 2.Dataset
 For homography estimation, the training data and testing data is from the DPDN, CAVE, RGB-NIR Sence datasets. For deformation registration, the training data and testing data is from Atlas and RIRE datasets. Please download the above data before running the code.
