@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from torch.nn import MSELoss
 from Model import losses
 from network_deformation import InMIR
-from network_single import AGNet
+from network_AGnet import AGNet
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from data_deformation import ImageFolder
@@ -22,30 +22,21 @@ model_path = 'model_RIRE_small'
 if not os.path.exists(model_path):
     os.system("mkdir "+model_path)
 
-
-
 def save_pic(data,path):
     if osp.exists(path):
         os.system("rm "+path)
         print("rm "+path)
     reimage = data.cpu().clone()
-    # reimage[reimage > 1.0] = 1.0
     reimage[reimage > 1.0] = 1.0
     reimage[reimage < 0.0] = 0.0
-    
-
     reimage = reimage.squeeze(0)
-    # print(reimage.shape)
-    reimage = transforms.ToPILImage()(reimage)  # PIL格式
-    # print(reimage.size)
-    # print(path)
+    reimage = transforms.ToPILImage()(reimage) 
     reimage.save(osp.join(path+'.png'))
 
 def Dice(img1, img2):
     
     dice = 2 *(img1 * img2).sum() / (img1.sum() + img2.sum())
     return dice
-
 
 def NCC(img1,img2):
     img1 = img1.cpu().numpy()
@@ -60,15 +51,11 @@ class Gradient_loss(nn.Module):
     def forward(s, penalty='l2'):
         dx = torch.abs(s[:, :, 1:, :] - s[:, :, :-1, :])
         dz = torch.abs(s[:, :, :, 1:] - s[:, :, :, :-1])
-
         if (penalty == 'l2'):
             dx = dx * dx
             dz = dz * dz
-
-        d = torch.mean(dx)  + torch.mean(dz)
-        
+        d = torch.mean(dx)  + torch.mean(dz)       
         return d / 2.0
-
 
 class DiceLoss(nn.Module):
 	def __init__(self):
@@ -77,15 +64,11 @@ class DiceLoss(nn.Module):
 	def	forward(self, input, target):
 		N = target.size(0)
 		smooth = 1
- 
 		input_flat = input.view(N, -1)
 		target_flat = target.view(N, -1)
- 
 		intersection = input_flat * target_flat
- 
 		loss = 2 * (intersection.sum(1) + smooth) / (input_flat.sum(1) + target_flat.sum(1) + smooth)
 		loss = 1 - loss.sum() / N
- 
 		return loss
 
 class smooth_Loss(nn.Module):
@@ -95,11 +78,9 @@ class smooth_Loss(nn.Module):
         tidu = torch.tensor([0]).float().cuda()
         for k in range(fai.size(0)):
             for i in range(62):
-                for j in range(62):
-                    
+                for j in range(62):                  
                     tidu += torch.abs(fai[k][0][i+1][j+1] - fai[k][0][i][j+1]) + torch.abs(fai[k][0][i+1][j+1] - fai[k][0][i+2][j+1] ) + torch.abs(fai[k][0][i+1][j+1]  - fai[k][0][i+1][j] ) + torch.abs(fai[k][0][i+1][j+1] - fai[k][0][i+1][j+2])
                     tidu += torch.abs(fai[k][1][i+1][j+1] - fai[k][1][i][j+1]) + torch.abs(fai[k][1][i+1][j+1] - fai[k][1][i+2][j+1]) + torch.abs(fai[k][1][i+1][j+1] - fai[k][1][i+1][j]) + torch.abs(fai[k][1][i+1][j+1] - fai[k][1][i+1][j+2])
-                # pdb.set_trace()
         return tidu
 
 nf_enc = [16, 32, 32, 32]
@@ -107,12 +88,11 @@ nf_dec = [32, 32, 32, 32, 32, 16, 16]
 
 class Trainer:
     def __init__(self):
-        self.epoch = 500
+        self.epoch = 1000
         self.batch_size = 4
         self.patch_size = [256,256]
         self.criterion = MSELoss(reduction='mean')
         self.lr = 0.001
-        # self.path = '/temp_disk2/lep/dataset/brain_nobone/'
         self.path = '/temp_disk2/lep/dataset/RIRE/'
         # self.path = '/home/yangwenzhe/lep_code/dataset/RGB_Depth_training_dataset/'
         self.transform = transforms.Compose([transforms.ToTensor()])
@@ -141,7 +121,7 @@ class Trainer:
         self.val_psnr = []
         self.sim_loss_fn = losses.mse_loss
         self.grad_loss_fn = losses.gradient_loss
-        self.best_loss = 10000000
+        self.best_loss = 10000
 
     def train(self):
         seed = random.randint(1, 1000)
@@ -152,8 +132,6 @@ class Trainer:
         for ep in range(1, self.epoch+1):
             self.model.train()
             epoch_loss = []
-            
-
             for batch, (modal1,modal2,GT) in enumerate(self.train_loader):
                 modal1 = modal1.cuda().squeeze(1)
                 modal2 = modal2.cuda()
@@ -173,14 +151,11 @@ class Trainer:
 
                 
                 dice_loss = self.diceloss(x_warp,GT)
-                # loss_smooth = self.smooth_Loss(fai)
                 grad_loss = self.grad_loss_fn(fai)
-                # loss_new = 1000 * (1-Dice(p_x_warp,p_y)).requires_grad_()
-                loss = (grad_loss * 200 +
-                         2000 * self.criterion(x_warp,GT)
-                        + 500 * self.criterion(p_y,y_c_single)
-                        + 500 * self.criterion(x_c_warp,x_c_single) 
-                        + 200 * self.criterion(x_hat,modal1) + 200 * self.criterion(y_hat,modal2))
+                loss = (grad_loss * 100 + 1000 * self.criterion(x_warp,GT)
+                        + 250 * self.criterion(p_y,y_c_single)
+                        + 250 * self.criterion(x_c_warp,x_c_single) 
+                        + 100 * self.criterion(x_hat,modal1) + 100 * self.criterion(y_hat,modal2))
 
                 loss1 = self.criterion(x_warp,GT)
                 loss2 = self.criterion(x_hat,modal1) + self.criterion(y_hat,modal2)
@@ -204,48 +179,23 @@ class Trainer:
                 'model': self.model.state_dict(),
                 'train_loss': self.train_loss
             }
-            torch.save(state, os.path.join('model_RIRE_small', 'latest.pth'))
+            torch.save(state, os.path.join('model_RIRE_small', 'last.pth'))
             if ep % 100 == 0:
                 torch.save(state, os.path.join('model_RIRE_small', str(ep)+'.pth'))
-            matplotlib.use('Agg')
-            fig1 = plt.figure()
-            plot_loss_list = self.train_loss
-            plt.plot(plot_loss_list)
-            plt.savefig('train_loss_curve_RIRE_small.png')
-
-
-            test_loss,test_loss2,test_grad = self.test()
-            fig2 = plt.figure()
-            plt.plot(test_loss)
-            plt.savefig('test_MSE_curve_RIRE_small.png')
-
-            fig3 = plt.figure()
-            plt.plot(test_loss2)
-            plt.savefig('test_loss_curve_RIRE_small.png')
-
-            fig4 = plt.figure()
-            plt.plot(test_grad)
-            plt.savefig('test_smooth_curve_RIRE_small.png')
-
-            plt.close('all')
 
         print('===> Finished Training!')
 
     def test(self):
         
         save_path = 'test_result/'
-        state = torch.load('model_RIRE_small/latest.pth')
+        state = torch.load('model_RIRE_small/last.pth')
         self.model.load_state_dict(state['model'])
         self.model.eval()
-        # state_single = torch.load('best_medical.pth')
-        state_single = torch.load('3_RIRE.pth')
-
-        # self.train_loss = state['train_loss']
+        state_single = torch.load('RIRE_AGNet.pth')
         self.single_model.load_state_dict(state_single['model'])
         self.single_model.eval()
 
         with torch.no_grad():
-            
             testepoch_MSE_loss = []
             testepoch_loss = []
             testepoch_grad_loss = []
@@ -256,16 +206,13 @@ class Trainer:
                 GT = GT.cuda()
                 x_hat,y_hat,warp_y_c,x_c,x_warp,y_c,p_x,p_y,p_x_warp,fai,x_c_warp = self.model(modal1, modal2)
                 x_u_single,y_v_single,p_x_single,p_y_single,x_c_single,y_c_single,x_hat_single,y_hat_single = self.single_model(x_warp, modal2)
-                # loss_smooth = self.smooth_Loss(fai,1)
-                # pdb.set_trace()
                 dice_loss = self.diceloss(x_warp,GT)
                 loss = self.criterion(x_warp,GT)
                 grad_loss = self.grad_loss_fn(fai)
-                loss2 = (grad_loss * 200 +
-                         2000 * self.criterion(x_warp,GT) 
-                        + 500 * self.criterion(p_y,y_c_single)
-                        + 500 * self.criterion(x_c_warp,x_c_single) 
-                        + 200 * self.criterion(x_hat,modal1) + 200 * self.criterion(y_hat,modal2) )
+                loss = (grad_loss * 100 + 1000 * self.criterion(x_warp,GT)
+                        + 250 * self.criterion(p_y,y_c_single)
+                        + 250 * self.criterion(x_c_warp,x_c_single) 
+                        + 100 * self.criterion(x_hat,modal1) + 100 * self.criterion(y_hat,modal2))
                 testepoch_MSE_loss.append(loss.item())
                 testepoch_loss.append(loss2.item())
                 testepoch_grad_loss.append(grad_loss.item())
@@ -275,8 +222,6 @@ class Trainer:
                 print(np.mean(testepoch_MSE_loss))
                 print('Covered!')
                 self.best_loss = np.mean(testepoch_MSE_loss)
-
-
             self.test_loss.append(np.mean(testepoch_MSE_loss))
             self.test_loss2.append(np.mean(testepoch_loss))
             self.test_grad_loss.append(np.mean(testepoch_grad_loss))
