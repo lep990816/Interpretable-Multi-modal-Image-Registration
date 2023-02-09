@@ -14,15 +14,15 @@ For homography estimation, the training data and testing data is from the DPDN, 
 ### Pre-train for AG-Net
 AG-Net is trained with fully registered multi-modal images for each dataset. We provide the pre-trained model for RIRE dataset. To train for other dataset, run the following command.
 ```
-python train_single.py
+python train_AGNet.py
 ```
 ### Train for InMIR-Net
 For rigid registration task, run the following command.
 ```
-python train_homography.py
+python main_homography.py
 ```
 
 For non-rigid registration task, run the following command.
 ```
-python train_deformation.py
+python main_deformation.py
 ```
