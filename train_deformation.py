@@ -179,7 +179,7 @@ class Trainer:
                 'model': self.model.state_dict(),
                 'train_loss': self.train_loss
             }
-            torch.save(state, os.path.join('model_RIRE_small', 'last.pth'))
+            torch.save(state, os.path.join('model_RIRE_small', 'latest.pth'))
             if ep % 100 == 0:
                 torch.save(state, os.path.join('model_RIRE_small', str(ep)+'.pth'))
 
@@ -188,7 +188,7 @@ class Trainer:
     def test(self):
         
         save_path = 'test_result/'
-        state = torch.load('model_RIRE_small/last.pth')
+        state = torch.load('model_RIRE_small/latest.pth')
         self.model.load_state_dict(state['model'])
         self.model.eval()
         state_single = torch.load('RIRE_AGNet.pth')
