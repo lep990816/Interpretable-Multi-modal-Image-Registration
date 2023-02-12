@@ -11,7 +11,7 @@ from torch.nn import MSELoss
 from network_AGnet import AGNet
 from torchvision import transforms
 from torch.utils.data import DataLoader
-from data_affine import ImageFolder
+from data import ImageFolder
 import os.path as osp
 
 model_path = 'AGNet_RIRE'
