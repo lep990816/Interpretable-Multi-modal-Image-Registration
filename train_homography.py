@@ -84,7 +84,7 @@ class Trainer:
         for ep in range(1, self.epoch+1):
             self.model.train()
             epoch_loss = []
-            for batch, (depth,rgb,GT,input_rgb,GT_rgb,filename,delta) in enumerate(self.train_loader):
+            for batch, (depth,rgb,GT,delta) in enumerate(self.train_loader):
                 rgb = rgb.cuda()
                 depth = depth.cuda()
                 delta = delta.cuda()
@@ -98,11 +98,11 @@ class Trainer:
                 torch.cuda.synchronize()
                 start_time = time.time()
                 
-                x_hat,y_hat,warp_y_c,x_c,x_warp,y_c,p_x,p_y,patch_b_hat,p_x_warp,delta_pre,h_inv = self.model(rgb, depth)
-                x_u_single,y_v_single,p_x_single,p_y_single,x_c_single,y_c_single,x_hat_single,y_hat_single = self.single_model(x_warp, depth)
+                x_hat,y_hat,x_warp,p_y,p_x_warp,delta_pre = self.model(rgb, depth)
+                p_x_single,p_y_single = self.single_model(x_warp, depth)
 
                 loss = (
-#                         200 * self.lambda1 * self.criterion(x_warp,GT) 
+                        # 200 * self.lambda1 * self.criterion(x_warp,GT) 
                         + 200 * self.lambda1 * self.criterion(delta,delta_pre) #使用坐标损失效果更好
                         + 200 * self.lambda2 * self.criterion(p_y,p_y_single) 
                         + 200 * self.lambda2 * self.criterion(p_x_warp,p_x_single) 
@@ -113,17 +113,14 @@ class Trainer:
                 delta = delta.squeeze(0)
                 delta_loss = self.criterion(delta,delta_pre.squeeze(0))
                 loss.backward()
-                chonggou2 = self.criterion(x_hat_single,GT) + self.criterion(y_hat_single,depth)
-                ssim1 = ms_ssim(x_warp,GT, data_range=1, size_average=False)[0]
-                ssim2 = ms_ssim(p_x_warp,p_x_single, data_range=1, size_average=False)[0]
                 epoch_loss.append(loss.item())
 
                 self.optimizer.step()
                 torch.cuda.synchronize()
                 end_time = time.time()
                 if batch % 100 == 0 and batch != 0:
-                    print('Epoch:{}\tcur/all:{}/{}\tAvg Loss:{:.4f}\tTime:{:.2f}\tMSE:{:.4f}\tdelta_loss:{:.4f}\tchonggou1:{:.4f}\tchonggou2:{:.4f}\tssim1:{:.4f}\tssim_common:{:.4f}\tfilename:{}'\
-                    .format(ep, batch, len(self.train_loader), loss.item(), end_time-start_time,loss1.item(),delta_loss.item(),loss2.item(),chonggou2.item(),ssim1.item(),ssim2.item(),filename))
+                    print('Epoch:{}\tcur/all:{}/{}\tAvg Loss:{:.4f}\tTime:{:.2f}\tMSE:{:.4f}\tdelta_loss:{:.4f}\tchonggou1:{:.4f}'\
+                    .format(ep, batch, len(self.train_loader), loss.item(), end_time-start_time,loss1.item(),delta_loss.item(),loss2.item()))
 
             self.scheduler.step()
             self.train_loss.append(np.mean(epoch_loss))
@@ -149,17 +146,15 @@ class Trainer:
         self.single_model.load_state_dict(state_single['model'])
         self.single_model.eval()
         with torch.no_grad():
-            
             testepoch_loss = []
             
-            for batch, (depth,rgb,GT,input_rgb,GT_rgb,filename,delta) in enumerate(self.test_loader):
+            for batch, (depth,rgb,GT,delta) in enumerate(self.test_loader):
                 rgb = rgb.cuda()
                 depth = depth.cuda()
                 delta = delta.cuda()
                 GT = GT.cuda()
-                x_hat,y_hat,warp_y_c,x_c,x_warp,y_c,p_x,p_y,patch_b_hat,p_x_warp,delta_pre,h_inv = self.model(rgb, depth)
-                x_u_single,y_v_single,p_x_single,p_y_single,x_c_single,y_c_single,x_hat_single,y_hat_single = self.single_model(x_warp, depth)
-
+                x_hat,y_hat,x_warp,p_y,p_x_warp,delta_pre = self.model(rgb, depth)
+                p_x_single,p_y_single = self.single_model(x_warp, depth)
                 delta_loss = self.criterion(delta,delta_pre)
                 testepoch_loss.append(delta_loss.item())
 
