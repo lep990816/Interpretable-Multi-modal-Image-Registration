@@ -134,7 +134,7 @@ class Trainer:
             }
             if not os.path.exists(self.model_path):
                 os.system("mkdir "+self.model_path)
-            torch.save(state, os.path.join(self.model_path, 'last.pth'))
+            torch.save(state, os.path.join(self.model_path, 'latest.pth'))
             if ep % 100 == 0:
                 torch.save(state, os.path.join(self.model_path, str(ep)+'.pth'))
         print('===> Finished Training!')
@@ -142,7 +142,7 @@ class Trainer:
     def test(self):
         
         save_path = 'test_result/'
-        state = torch.load(os.path.join(self.model_path, 'last.pth'))
+        state = torch.load(os.path.join(self.model_path, 'latest.pth'))
         self.model.load_state_dict(state['model'])
         self.model.eval()
         state_single = torch.load('AGNet_DPDN.pth')
