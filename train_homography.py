@@ -73,7 +73,7 @@ class Trainer:
         self.best_loss = 10000000        
         self.lambda1 = 10
         self.lambda2 = 2.5
-        self.lambda3 = 50
+        self.lambda3 = 1
         self.model_path = os.path.join('model_'+str(self.lambda1)+'_'+str(self.lambda2)+'_'+str(self.lambda3))
 
     def train(self):
