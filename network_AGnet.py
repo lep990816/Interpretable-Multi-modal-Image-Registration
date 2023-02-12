@@ -91,4 +91,4 @@ class AGNet(nn.Module):
         y_hat = self.conv_v(v) + self.conv_y_ck(c_k)
 
 
-        return self.conv_u(u),self.conv_v(v),p_x,p_y,self.conv_x_ck(c_k),self.conv_y_ck(c_k),x_hat,y_hat
+        return p_x,p_y,x_hat,y_hat
