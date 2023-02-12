@@ -69,14 +69,14 @@ class Trainer:
         for ep in range(1, self.epoch+1):
             self.model.train()
             epoch_loss = []
-            for batch, (rgb_origin,mutispectral) in enumerate(self.train_loader):
-                rgb_origin = rgb_origin.cuda()
-                mutispectral = mutispectral.cuda()
+            for batch, (input1,input2) in enumerate(self.train_loader):
+                input1 = input1.cuda()
+                input2 = input2.cuda()
                 self.optimizer.zero_grad()
                 torch.cuda.synchronize()
                 start_time = time.time()
-                u,v,p_x,p_y,x_c,y_c,x_hat,y_hat,p_x_1,p_x_2,p_x_3,p_y_1,p_y_2,p_y_3 = self.model(rgb_origin, mutispectral) 
-                loss1 = 400 * self.criterion(rgb_origin,x_hat)  + 400 * self.criterion(mutispectral,y_hat)
+                p_x,p_y,x_hat,y_hat = self.model(input1, input2) 
+                loss1 = 1000 * self.criterion(input1,x_hat)  + 1000 * self.criterion(input2,y_hat)
                 epoch_loss.append(loss1.item())
                 loss1.backward()
                 self.optimizer.step()
@@ -102,11 +102,11 @@ class Trainer:
         with torch.no_grad():
             
             testepoch_loss = []
-            for batch, (rgb_origin,mutispectral) in enumerate(self.test_loader):
-                rgb_origin = rgb_origin.cuda()
-                mutispectral = mutispectral.cuda()
-                u,v,p_x,p_y,x_c,y_c,x_hat,y_hat,p_x_1,p_x_2,p_x_3,p_y_1,p_y_2,p_y_3 = self.model(rgb_origin, mutispectral)
-                loss1 = 400 * self.criterion(rgb_origin,x_hat)  + 400 * self.criterion(mutispectral,y_hat)
+            for batch, (input1,input2) in enumerate(self.test_loader):
+                input1 = input1.cuda()
+                input2 = input2.cuda()
+                p_x,p_y,x_hat,y_hat = self.model(input1, input2)
+                loss1 = 1000 * self.criterion(input1,x_hat)  + 1000 * self.criterion(input2,y_hat)
                 testepoch_loss.append(loss1.item())
 
             if np.mean(testepoch_loss) < self.best_loss:
