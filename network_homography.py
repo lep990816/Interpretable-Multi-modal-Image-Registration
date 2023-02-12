@@ -221,4 +221,4 @@ class InMIRNet(nn.Module):
         p_x_warp = kornia.warp_perspective(p_x, h, (256,256))
         y_hat = self.conv_v(v) + y_c
 
-        return x_hat,y_hat,warp_y_c,x_c,x_warp,y_c,p_x,p_y,patch_b_hat,p_x_warp,delta,h
+        return x_hat,y_hat,x_warp,p_y,p_x_warp,delta
