@@ -102,8 +102,8 @@ class Trainer:
                 x_u_single,y_v_single,p_x_single,p_y_single,x_c_single,y_c_single,x_hat_single,y_hat_single = self.single_model(x_warp, depth)
 
                 loss = (
-                        200 * self.lambda1 * self.criterion(x_warp,GT) 
-                        # +200 * self.lambda1 * self.criterion(delta,delta_pre) #使用坐标损失效果更好
+#                         200 * self.lambda1 * self.criterion(x_warp,GT) 
+                        + 200 * self.lambda1 * self.criterion(delta,delta_pre) #使用坐标损失效果更好
                         + 200 * self.lambda2 * self.criterion(p_y,p_y_single) 
                         + 200 * self.lambda2 * self.criterion(p_x_warp,p_x_single) 
                         + 200 * self.lambda3 * self.criterion(x_hat,rgb) + 200 * self.lambda3 * self.criterion(y_hat,depth) 
@@ -159,13 +159,7 @@ class Trainer:
                 GT = GT.cuda()
                 x_hat,y_hat,warp_y_c,x_c,x_warp,y_c,p_x,p_y,patch_b_hat,p_x_warp,delta_pre,h_inv = self.model(rgb, depth)
                 x_u_single,y_v_single,p_x_single,p_y_single,x_c_single,y_c_single,x_hat_single,y_hat_single = self.single_model(x_warp, depth)
-                loss = (
-                        200 * self.lambda1 * self.criterion(x_warp,GT) 
-                        # +200 * self.lambda1 * self.criterion(delta,delta_pre) #使用坐标损失效果更好
-                        + 200 * self.lambda2 * self.criterion(p_y,p_y_single) 
-                        + 200 * self.lambda2 * self.criterion(p_x_warp,p_x_single) 
-                        + 200 * self.lambda3 * self.criterion(x_hat,rgb) + 200 * self.lambda3 * self.criterion(y_hat,depth) 
-                        )
+
                 delta_loss = self.criterion(delta,delta_pre)
                 testepoch_loss.append(delta_loss.item())
 
