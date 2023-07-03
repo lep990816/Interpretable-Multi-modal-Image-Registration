@@ -27,3 +27,25 @@ For non-rigid registration task, run the following command.
 ```
 python main_deformation.py
 ```
+
+## 4.Testing
+### Test for homography estimation
+Run the following command.
+```
+python test.py
+```
+
+
+## 5.Citation
+If you find our paper or code useful for your research, please cite:
+```
+@article{deng2023interpretable,
+  title={Interpretable Multi-modal Image Registration Network Based on Disentangled Convolutional Sparse Coding},
+  author={Deng, Xin and Liu, Enpeng and Li, Shengxi and Duan, Yiping and Xu, Mai},
+  journal={IEEE Transactions on Image Processing},
+  volume={32},
+  pages={1078--1091},
+  year={2023},
+  publisher={IEEE}
+}
+```
